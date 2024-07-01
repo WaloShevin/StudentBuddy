@@ -2,8 +2,12 @@ import streamlit as st
 import openai
 import requests
 
+import streamlit as st
+import openai
+import requests
+
 # Set your OpenAI API key
-openai.api_key = ""
+openai.api_key = " "
 
 # Function to get Moodle data
 def get_moodle_data(username, password):
@@ -26,8 +30,6 @@ def get_moodle_data(username, password):
             assignments_url = f"{moodle_url}/webservice/rest/server.php?wstoken={user_token}&wsfunction=mod_assign_get_assignments&moodlewsrestformat=json"
             assignments_response = requests.get(assignments_url).json()
 
-            # Print the entire JSON response for debugging
-            st.write("Assignments Response:", assignments_response)
 
             # Adapt this based on the actual JSON structure
             assignments = []
@@ -39,6 +41,9 @@ def get_moodle_data(username, password):
                         "workload": "high"  # You might want to determine workload dynamically
                     })
 
+            # Sort assignments by due date
+            assignments.sort(key=lambda x: x['due_date'])
+
             return {"assignments": assignments}
         else:
             st.error("Moodle login failed: Token not found in response.")
@@ -48,13 +53,20 @@ def get_moodle_data(username, password):
         return None
 
 # Function to get OpenAI response
-def get_ai_response(prompt, history):
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
-        messages=history,
-        max_tokens=150
-    )
-    return response['choices'][0]['message']['content'].strip()
+def get_ai_response(prompt, history, model="gpt-3.5-turbo"):
+    try:
+        response = openai.ChatCompletion.create(
+            model=model,
+            messages=history,
+            max_tokens=150
+        )
+        return response['choices'][0]['message']['content'].strip()
+    except openai.error.RateLimitError:
+        st.error("Rate limit exceeded. Please try again later.")
+        return "Rate limit exceeded. Please try again later."
+    except openai.error.OpenAIError as e:
+        st.error(f"OpenAI API error: {e}")
+        return f"OpenAI API error: {e}"
 
 # Function to get AI recommendations
 def get_ai_recommendations(moodle_data):
@@ -62,6 +74,8 @@ def get_ai_recommendations(moodle_data):
     You are an AI assistant for university students. Here is the data for a student:
     Assignments:
     {moodle_data['assignments']}
+    Exams:
+    {moodle_data.get('exams', [])}
 
     Provide a personalized study plan and reminders.
     """
@@ -92,6 +106,10 @@ if 'moodle_data' in st.session_state:
     for assignment in moodle_data['assignments']:
         st.write(f"Course: {assignment['course']}, Due Date: {assignment['due_date']}, Workload: {assignment['workload']}")
 
+    st.subheader("Your Exams")
+    for exam in moodle_data.get('exams', []):
+        st.write(f"Course: {exam['course']}, Date: {exam['date']}")
+
     # Get AI recommendations
     st.subheader("AI Recommendations")
     recommendations = get_ai_recommendations(moodle_data)
@@ -107,3 +125,5 @@ if 'moodle_data' in st.session_state:
             history.append({"role": "user", "content": user_question})
             ai_response = get_ai_response(user_question, history)
             st.write(f"AI: {ai_response}")
+else:
+    st.info("Please log in to view your assignments and ask questions.")
