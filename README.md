@@ -1,4 +1,6 @@
-# StudentBuddy
+# StudentBuddy 
+Moslem El-Omar 585039
+Shevin Walo 584560
 How to Use Your AI-Based Learning Assistant for Students
 Here’s a detailed guide on how to effectively use the AI-Based Learning Assistant for Students application, including setting up and using the features for optimal academic management.
 
