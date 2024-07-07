@@ -1,5 +1,6 @@
 # StudentBuddy 
 Moslem El-Omar 585039
+
 Shevin Walo 584560
 
 How to Use Your AI-Based Learning Assistant for Students
